@@ -4,7 +4,7 @@ A small React + Vite site built from the Rumbo design. The content is static for
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
+npm run dev      # http://localhost:3000
 ```
 
 ## Pages
