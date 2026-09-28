@@ -4,9 +4,9 @@ A small travel blog built with **React + Vite** and **Storyblok** as a headless 
 
 | | Link |
 | --- | --- |
-| 📦 Repository | `https://github.com/<your-user>/rumbo-react` |
-| 🌐 Production (published content) | `https://<your-production-url>.vercel.app` |
-| 👀 Preview (draft content + Visual Editor) | `https://<your-preview-url>.vercel.app` |
+| Repository | [github.com/KevoSantana12/Storyblok](https://github.com/KevoSantana12/Storyblok) |
+| Production (published content) | [storyblokpublished.netlify.app](https://storyblokpublished.netlify.app/) |
+| Preview (draft / unpublished content + Visual Editor) | [storyblokprev.netlify.app](https://storyblokprev.netlify.app/) |
 
 ---
 
@@ -31,7 +31,7 @@ A small travel blog built with **React + Vite** and **Storyblok** as a headless 
 | **Draft content** | Every Content Delivery API request sends `version`, read from `VITE_STORYBLOK_VERSION` (`draft` locally and in the preview deployment). | `src/storyblok/config.ts`, `src/pages/StoryPage.tsx`, `DestinationGrid.tsx`, `DestinationsPage.tsx` |
 | **Live editing** | `useStoryblok` loads the Storyblok Bridge and re-renders on every keystroke in the Visual Editor. Every block spreads `{...storyblokEditable(blok)}` so it can be clicked in the preview. The local dev server runs on HTTPS, as the Visual Editor requires. | `src/storyblok/`, `vite.config.ts` |
 | **Dynamic routing** | One catch-all route: the URL becomes a slug, the slug loads a story, and the story's content type picks the React component. New pages need no code. | `src/pages/StoryPage.tsx` |
-| **Preview and production deployments** | Same code, two Vercel projects with different environment variables: preview (Preview token + `draft`) and production (Public token + `published`). The Bridge only loads in draft mode. | [Section 7](#7-deployment-preview-vs-production), `vercel.json` |
+| **Preview and production deployments** | Same code deployed to two **Netlify** sites with different environment variables: preview (Preview token + `draft`) and production (Public token + `published`). The Bridge only loads in draft mode. | [Section 7](#7-deployment-preview-vs-production) |
 | **Content type created with the Management API** | `destination` created with `POST /v1/spaces/:space_id/components/` (`is_root: true`, `is_nestable: false`). | [Section 5.2](#52-create-the-destination-content-type) |
 | **Image upload with the Management API** | Three-step signed upload: signed response → S3 multipart upload → `finish_upload`. | [Section 5.4](#54-upload-the-image-asset-3-requests) |
 | **Story created with the Management API** | *Calm Bay* created with `POST /v1/spaces/:space_id/stories`, based on the `destination` type, with the uploaded image as its cover. | [Section 5.5](#55-create-the-story) |
@@ -548,9 +548,9 @@ The first run installs a local certificate with mkcert; accept it. Then open the
 
 ## 7. Deployment: preview vs production
 
-Same repository, two Vercel projects. Only the environment variables differ (*Project → Settings → Environment Variables*):
+The site is deployed to **Netlify** as two sites built from the same GitHub repository. Only the environment variables differ (*Site configuration → Environment variables*):
 
-| Variable | Preview project | Production project |
+| Variable | Preview site ([storyblokprev](https://storyblokprev.netlify.app/)) | Production site ([storyblokpublished](https://storyblokpublished.netlify.app/)) |
 | --- | --- | --- |
 | `VITE_STORYBLOK_DELIVERY_API_TOKEN` | **Preview** token | **Public** token |
 | `VITE_STORYBLOK_VERSION` | `draft` | `published` |
@@ -558,7 +558,9 @@ Same repository, two Vercel projects. Only the environment variables differ (*Pr
 | Audience | Editors in the Visual Editor | Site visitors |
 
 - The preview URL is set as a Visual Editor location in Storyblok.
-- `vercel.json` rewrites all paths to `index.html` so deep links like `/destinations/calm-bay` work on reload.
+- Build settings on both sites: build command `npm run build`, publish directory `dist`.
+- A Netlify redirect rule (`/*  /index.html  200`) sends every path to `index.html`, so deep links like `/destinations/calm-bay` work on reload.
+- Vite reads `VITE_*` variables at **build time**, so after changing a variable in Netlify the site has to be redeployed.
 - The Public token can only read published content, so even if someone changed the `version` parameter in production, drafts could not be exposed.
 
 **How to see the difference:** edit a story and **Save** without publishing → the change appears in preview only. Click **Publish** → it appears in production too.
@@ -576,7 +578,7 @@ A record of the problems that came up while building the project, what caused th
 | `Hero is not defined` / `Property 'blok' is missing` | An old static page still rendered `<Hero />` without a `blok`. | Render pages via `StoryblokComponent`, never block components directly. |
 | TypeScript: `JSX.IntrinsicElements` / implicit `any` | JS project converted to TSX without TS config. | Added `tsconfig.json` (`"jsx": "react-jsx"`), `@types/react`, and typed props with `SbBlokData`. |
 | TypeScript error in `StoryblokRichText` `image` override | Hand-written type required `src: string`; the SDK allows `string \| null`. | Use the SDK type `StoryblokReactRichTextProps<'image'>` and guard `if (!attrs.src)`. |
-| `…differs from file name … only in casing` | Import `./destination` vs file `Destination.tsx`. Works on Windows, breaks on Vercel (Linux). | Make imports match file names exactly. |
+| `…differs from file name … only in casing` | Import `./destination` vs file `Destination.tsx`. Works on Windows, breaks on the Netlify build (Linux). | Make imports match file names exactly. |
 | Management API `401` with a token from the space | Used the Public (Content Delivery) token. | Use a **Personal access token**, without `Bearer`. |
 | CloudFront `403 Bad request` on a `GET` | Postman request duplicated from a POST still had a body; CloudFront rejects GET with a body. | Body → *none* on GET requests. |
 | S3 `403` / expired signature risk | Signed fields expire (~10 min) and must be sent unchanged, file last. | Run steps 1 and 2 back-to-back; copy fields exactly; file as the last form-data row; *No Auth*. |
