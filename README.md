@@ -1,48 +1,40 @@
 # Rumbo · Storyblok + React travel blog
 
-A small travel blog built with **React + Vite** and **Storyblok** as a headless CMS, created for the Storyblok *Technical Support Engineer II* take-home task.
+A small travel blog built with **React + Vite** and **Storyblok** as a headless CMS. Pages are composed from Storyblok blocks, edited live in the Visual Editor, and part of the content model, assets and stories were created through the Storyblok Management API.
 
 | | Link |
 | --- | --- |
-| Repository | `https://github.com/KevoSantana12/Storyblokt` |
-| Production (published content) | `https://<your-production-url>.vercel.app` |
-| Preview (draft content + Visual Editor) | `https://<your-preview-url>.vercel.app` |
+| 📦 Repository | `https://github.com/<your-user>/rumbo-react` |
+| 🌐 Production (published content) | `https://<your-production-url>.vercel.app` |
+| 👀 Preview (draft content + Visual Editor) | `https://<your-preview-url>.vercel.app` |
 
 ---
 
 ## Contents
 
-1. [How this project meets the task requirements](#1-how-this-project-meets-the-task-requirements)
+1. [Features](#1-features)
 2. [Stack and project structure](#2-stack-and-project-structure)
 3. [Content model](#3-content-model)
-4. [Part 1 – Building the site step by step](#4-part-1--building-the-site-step-by-step)
-5. [Part 2 – Management API step by step](#5-part-2--management-api-step-by-step)
+4. [Building the site step by step](#4-building-the-site-step-by-step)
+5. [Management API step by step](#5-management-api-step-by-step)
 6. [Run it locally](#6-run-it-locally)
 7. [Deployment: preview vs production](#7-deployment-preview-vs-production)
 8. [Issues found and how I solved them](#8-issues-found-and-how-i-solved-them)
 
 ---
 
-## 1. How this project meets the task requirements
+## 1. Features
 
-### Task 1, Part 1 – Website with Storyblok
-
-| Requirement | How it is met | Where |
+| Feature | How it works | Where |
 | --- | --- | --- |
-| Create a simple website using the Quickstart | React + Vite app following the official *Integrate React with Storyblok* guide: `storyblokInit` + `apiPlugin`, `useStoryblok`, `StoryblokComponent` and one React component per Storyblok block. | `src/main.tsx`, `src/storyblok/` |
-| Fetch the **draft** version of the content | Every Content Delivery API request sends `version`, read from `VITE_STORYBLOK_VERSION` (`draft` locally and in the preview deployment). | `src/storyblok/config.ts`, `src/pages/StoryPage.tsx`, `DestinationGrid.tsx`, `DestinationsPage.tsx` |
-| **Live editing** enabled | `useStoryblok` loads the Storyblok Bridge and re-renders on every keystroke in the Visual Editor. Every block spreads `{...storyblokEditable(blok)}` so it can be clicked in the preview. Local dev server runs on **HTTPS** as the Visual Editor requires. | All files in `src/storyblok/`, `vite.config.ts` |
-| Deployed to Netlify / Vercel | Deployed to **Vercel**. `vercel.json` rewrites every route to `index.html` so client-side routes work on reload. | `vercel.json` |
-| *(Optional)* Separate preview and production deployments | Same code, two Vercel projects with different environment variables: **preview** (Preview token + `draft`) and **production** (Public token + `published`). The Bridge only loads in draft mode. | [Section 7](#7-deployment-preview-vs-production) |
-
-### Task 1, Part 2 – Storyblok APIs
-
-| Requirement | How it is met | Where |
-| --- | --- | --- |
-| Create a new component of type **Content Type** | `POST /v1/spaces/:space_id/components/` creating `destination` with `is_root: true`, `is_nestable: false`. | [Step 5.2](#52-create-the-destination-content-type) |
-| Create a story based on that content type | `POST /v1/spaces/:space_id/stories` creating **Calm Bay** (`content.component: "destination"`) inside the `destinations` folder, published. | [Step 5.5](#55-create-the-story) |
-| Upload image assets with the Management API | Three-step signed upload: signed response → S3 multipart upload → `finish_upload`. | [Step 5.4](#54-upload-the-image-asset-3-requests) |
-| Document explaining the steps, especially the asset | This README, sections 5 and 8. | — |
+| **Storyblok as headless CMS** | React + Vite app based on the official *Integrate React with Storyblok* guide: `storyblokInit` + `apiPlugin`, `useStoryblok`, `StoryblokComponent` and one React component per Storyblok block. | `src/main.tsx`, `src/storyblok/` |
+| **Draft content** | Every Content Delivery API request sends `version`, read from `VITE_STORYBLOK_VERSION` (`draft` locally and in the preview deployment). | `src/storyblok/config.ts`, `src/pages/StoryPage.tsx`, `DestinationGrid.tsx`, `DestinationsPage.tsx` |
+| **Live editing** | `useStoryblok` loads the Storyblok Bridge and re-renders on every keystroke in the Visual Editor. Every block spreads `{...storyblokEditable(blok)}` so it can be clicked in the preview. The local dev server runs on HTTPS, as the Visual Editor requires. | `src/storyblok/`, `vite.config.ts` |
+| **Dynamic routing** | One catch-all route: the URL becomes a slug, the slug loads a story, and the story's content type picks the React component. New pages need no code. | `src/pages/StoryPage.tsx` |
+| **Preview and production deployments** | Same code, two Vercel projects with different environment variables: preview (Preview token + `draft`) and production (Public token + `published`). The Bridge only loads in draft mode. | [Section 7](#7-deployment-preview-vs-production), `vercel.json` |
+| **Content type created with the Management API** | `destination` created with `POST /v1/spaces/:space_id/components/` (`is_root: true`, `is_nestable: false`). | [Section 5.2](#52-create-the-destination-content-type) |
+| **Image upload with the Management API** | Three-step signed upload: signed response → S3 multipart upload → `finish_upload`. | [Section 5.4](#54-upload-the-image-asset-3-requests) |
+| **Story created with the Management API** | *Calm Bay* created with `POST /v1/spaces/:space_id/stories`, based on the `destination` type, with the uploaded image as its cover. | [Section 5.5](#55-create-the-story) |
 
 ---
 
@@ -52,7 +44,7 @@ A small travel blog built with **React + Vite** and **Storyblok** as a headless 
 - **React Router 7** — one catch-all route; Storyblok decides what each URL shows
 - **@storyblok/react** — `storyblokInit`, `apiPlugin`, `useStoryblok`, `useStoryblokApi`, `StoryblokComponent`, `storyblokEditable`, `StoryblokRichText`
 - **vite-plugin-mkcert** — local HTTPS for the Visual Editor
-- **Postman** — Management API requests (Part 2)
+- **Postman** — Management API requests
 - The visual design was prototyped in Claude Design and then rebuilt as React components.
 
 ```
@@ -129,7 +121,7 @@ The publish date is not a field: it comes from the story's `first_published_at`.
 
 ---
 
-## 4. Part 1 – Building the site step by step
+## 4. Building the site step by step
 
 ### 4.1 Design and static React version
 1. Designed the site (home, destinations list, destination detail; desktop and mobile) in Claude Design.
@@ -266,7 +258,7 @@ A `Loader` component (the Rumbo compass with an animated needle, `role="status"`
 
 ---
 
-## 5. Part 2 – Management API step by step
+## 5. Management API step by step
 
 All requests were made with **Postman** against the EU Management API base URL `https://mapi.storyblok.com/v1`. Space ID: `295475393123693`.
 
@@ -575,7 +567,7 @@ Same repository, two Vercel projects. Only the environment variables differ (*Pr
 
 ## 8. Issues found and how I solved them
 
-Troubleshooting these is a big part of the support role, so I kept a record:
+A record of the problems that came up while building the project, what caused them and how they were fixed:
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
