@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
+import { Logo } from '../storyblok/stories/landing/Utils/Icons';
 
-import { Logo } from './Icons';
 
 export default function Footer() {
   return (

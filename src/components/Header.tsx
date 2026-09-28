@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router';
+import { Logo } from '../storyblok/stories/landing/Utils/Icons';
 
-import { Logo } from './Icons';
+
 
 export default function Header() {
   return (

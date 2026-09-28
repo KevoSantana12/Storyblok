@@ -28,7 +28,7 @@ function Stroke({ size = 18, children }) {
   );
 }
 
-export function ArrowRight({ size }) {
+export function ArrowRight({ size = 18 }) {
   return (
     <Stroke size={size}>
       <path d="M5 12h14M13 6l6 6-6 6" />
@@ -36,7 +36,7 @@ export function ArrowRight({ size }) {
   );
 }
 
-export function ArrowLeft({ size }) {
+export function ArrowLeft({ size = 18 }) {
   return (
     <Stroke size={size}>
       <path d="M19 12H5M11 6l-6 6 6 6" />
